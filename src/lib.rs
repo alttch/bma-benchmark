@@ -31,6 +31,7 @@ macro_rules! format_number {
     };
 }
 
+/// Start the default stared benchmark stage
 #[macro_export]
 macro_rules! staged_benchmark_start {
     ($name: expr) => {
@@ -41,6 +42,7 @@ macro_rules! staged_benchmark_start {
     };
 }
 
+/// Finish the default staged benchmark stage
 #[macro_export]
 macro_rules! staged_benchmark_finish {
     ($name: expr, $iterations: expr) => {
@@ -51,36 +53,7 @@ macro_rules! staged_benchmark_finish {
     };
 }
 
-#[macro_export]
-macro_rules! staged_benchmark_reset {
-    () => {
-        bma_benchmark::DEFAULT_STAGE_BENCHMARK
-            .lock()
-            .unwrap()
-            .reset();
-    };
-}
-
-#[macro_export]
-macro_rules! staged_benchmark_print {
-    () => {
-        bma_benchmark::DEFAULT_STAGE_BENCHMARK
-            .lock()
-            .unwrap()
-            .print();
-    };
-}
-
-#[macro_export]
-macro_rules! staged_benchmark_print_for {
-    ($etalon: expr) => {
-        bma_benchmark::DEFAULT_STAGE_BENCHMARK
-            .lock()
-            .unwrap()
-            .print_for($etalon);
-    };
-}
-
+/// Finish the default staged benchmark current (last started) stage
 #[macro_export]
 macro_rules! staged_benchmark_finish_current {
     ($iterations: expr) => {
@@ -91,6 +64,40 @@ macro_rules! staged_benchmark_finish_current {
     };
 }
 
+/// Reset the default staged benchmark
+#[macro_export]
+macro_rules! staged_benchmark_reset {
+    () => {
+        bma_benchmark::DEFAULT_STAGE_BENCHMARK
+            .lock()
+            .unwrap()
+            .reset();
+    };
+}
+
+/// Print staged benchmark result
+#[macro_export]
+macro_rules! staged_benchmark_print {
+    () => {
+        bma_benchmark::DEFAULT_STAGE_BENCHMARK
+            .lock()
+            .unwrap()
+            .print();
+    };
+}
+
+/// Print staged benchmark result, specifying the etalonic stage
+#[macro_export]
+macro_rules! staged_benchmark_print_for {
+    ($etalon: expr) => {
+        bma_benchmark::DEFAULT_STAGE_BENCHMARK
+            .lock()
+            .unwrap()
+            .print_for($etalon);
+    };
+}
+
+/// Start simple benchmark
 #[macro_export]
 macro_rules! benchmark_start {
     () => {
@@ -98,6 +105,7 @@ macro_rules! benchmark_start {
     };
 }
 
+/// Finish simple benchmark and print results
 #[macro_export]
 macro_rules! benchmark_print {
     ($iterations: expr) => {
@@ -108,12 +116,14 @@ macro_rules! benchmark_print {
     };
 }
 
+/// Benchmark results for a simple benchmark or a stage
 pub struct BenchmarkResult {
     pub elapsed: Duration,
     pub iterations: u32,
-    pub speed: u64,
+    pub speed: u32,
 }
 
+/// Stage benchmark
 pub struct StageBenchmark {
     benchmarks: BTreeMap<String, Benchmark>,
     current_stage: Option<String>,
@@ -133,6 +143,7 @@ impl StageBenchmark {
         }
     }
 
+    /// Start benchmark stage
     pub fn start(&mut self, name: &str) {
         let benchmark = Benchmark::new0();
         if self.benchmarks.insert(name.to_owned(), benchmark).is_some() {
@@ -142,11 +153,12 @@ impl StageBenchmark {
         println!("{}", format!("!!! stage started: {} ", name).black());
     }
 
+    /// Finish benchmark stage
     pub fn finish(&mut self, name: &str, iterations: u32) {
         let benchmark = self
             .benchmarks
             .get_mut(name)
-            .expect(&format!("Benchmark stage {} not found", name));
+            .unwrap_or_else(|| panic!("Benchmark stage {} not found", name));
         benchmark.finish_for(iterations);
         println!(
             "{}",
@@ -159,6 +171,7 @@ impl StageBenchmark {
         );
     }
 
+    /// Finish current (last started) benchmark stage
     pub fn finish_current(&mut self, iterations: u32) {
         let current_stage = self
             .current_stage
@@ -167,11 +180,12 @@ impl StageBenchmark {
         self.finish(&current_stage, iterations);
     }
 
+    /// Reset staged benchmark
     pub fn reset(&mut self) {
         self.benchmarks.clear();
     }
 
-    pub fn _result_table_for(&self, eta: Option<&str>) -> Table {
+    fn _result_table_for(&self, eta: Option<&str>) -> Table {
         let mut header = vec!["stage", "sec", "msec", "iters/s"];
         let eta_speed = eta.map(|v| {
             header.push("diff");
@@ -187,10 +201,10 @@ impl StageBenchmark {
                 cell!(format!("{:.3}", elapsed * 1000.0).cyan()),
                 cell!(format_number!(result.speed).yellow()),
             ];
-            eta_speed.map(|r| {
+            if let Some(r) = eta_speed {
                 if result.speed != r {
-                    let diff = result.speed as f64 / r as f64;
-                    if diff > 1.0001 || diff < 0.9999 {
+                    let diff = f64::from(result.speed) / f64::from(r);
+                    if !(0.9999..=1.0001).contains(&diff) {
                         if diff > 1.0 {
                             cells.push(cell!(format!("+{:.2} %", ((diff - 1.0) * 100.0)).green()));
                         } else {
@@ -198,31 +212,36 @@ impl StageBenchmark {
                         }
                     }
                 }
-            });
+            };
             table.add_row(prettytable::Row::new(cells));
         }
         table
     }
 
+    /// Get the result table for staged benchmark
     pub fn result_table(&self) -> Table {
         self._result_table_for(None)
     }
 
+    /// Get the result table for staged benchmark, specifying the etalon stage
     pub fn result_table_for(&self, eta: &str) -> Table {
         self._result_table_for(Some(eta))
     }
 
+    /// Print the result table
     pub fn print(&self) {
         println!("{}", result_separator!());
         self.result_table().printstd();
     }
 
+    /// Print the result table, specifying the etalon stage
     pub fn print_for(&self, eta: &str) {
         println!("{}", result_separator!());
         self.result_table_for(eta).printstd();
     }
 }
 
+/// Simple benchmark or a stage
 pub struct Benchmark {
     started: Instant,
     iterations: u32,
@@ -242,6 +261,7 @@ impl fmt::Display for Benchmark {
 }
 
 impl Benchmark {
+    /// Create simple benchmark with unknown number of iterations
     pub fn new0() -> Self {
         Self {
             started: Instant::now(),
@@ -250,6 +270,7 @@ impl Benchmark {
         }
     }
 
+    /// Create simple benchmark with pre-defined number of iterations
     pub fn new(iterations: u32) -> Self {
         Self {
             started: Instant::now(),
@@ -258,50 +279,57 @@ impl Benchmark {
         }
     }
 
+    /// Reset the benchmark timer
     pub fn reset(&mut self) {
         self.started = Instant::now();
     }
 
+    /// Finish a simple benchmark
     pub fn finish(&mut self) {
         self.elapsed = Some(self.started.elapsed());
     }
 
+    /// Finish a simple benchmark, specifying number of iterations made
     pub fn finish_for(&mut self, iterations: u32) {
         self.elapsed = Some(self.started.elapsed());
         self.iterations = iterations;
     }
 
-    pub fn set_iterations(&mut self, iterations: u32) {
-        self.iterations = iterations;
-    }
-
+    /// Print a simple benchmark result
     pub fn print(&self) {
         self.print_for(self.iterations);
     }
 
+    /// Print a simple benchmark result, specifying number of iterations made
     pub fn print_for(&self, iterations: u32) {
         println!("{}", self.to_string_for(iterations));
     }
 
+    #[allow(clippy::cast_sign_loss)]
+    #[allow(clippy::cast_possible_truncation)]
+    /// Get a benchmark result
     pub fn result(&self) -> BenchmarkResult {
         let elapsed = self.elapsed.unwrap_or_else(|| self.started.elapsed());
         BenchmarkResult {
             elapsed,
             iterations: self.iterations,
-            speed: (f64::from(self.iterations) / elapsed.as_secs_f64()) as u64,
+            speed: (f64::from(self.iterations) / elapsed.as_secs_f64()) as u32,
         }
     }
 
+    #[allow(clippy::cast_sign_loss)]
+    #[allow(clippy::cast_possible_truncation)]
+    /// Get a benchmark result, specifying number of iterations made
     pub fn result_for(&self, iterations: u32) -> BenchmarkResult {
         let elapsed = self.elapsed.unwrap_or_else(|| self.started.elapsed());
         BenchmarkResult {
             elapsed,
             iterations,
-            speed: (f64::from(iterations) / elapsed.as_secs_f64()) as u64,
+            speed: (f64::from(iterations) / elapsed.as_secs_f64()) as u32,
         }
     }
 
-    pub fn to_string_for(&self, iterations: u32) -> String {
+    fn to_string_for(&self, iterations: u32) -> String {
         let result = self.result_for(iterations);
         let elapsed = result.elapsed.as_secs_f64();
         format!(
@@ -313,6 +341,10 @@ impl Benchmark {
         )
     }
 
+    /// Increment iterations inside benchmark
+    ///
+    /// Not required to use if the number of iterations is specified at benchmark creation or
+    /// finish / print
     pub fn increment(&mut self) {
         self.iterations += 1;
     }
@@ -344,6 +376,7 @@ fn ctable(titles: Option<Vec<&str>>, raw: bool) -> prettytable::Table {
     table
 }
 
+#[allow(clippy::cast_possible_truncation)]
 fn separator(title: &str) -> colored::ColoredString {
     let size = terminal_size();
     let width = if let Some((Width(w), Height(_))) = size {
