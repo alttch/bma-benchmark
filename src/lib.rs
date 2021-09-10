@@ -183,7 +183,7 @@ impl StageBenchmark {
             let elapsed = result.elapsed.as_secs_f64();
             let mut cells = vec![
                 cell!(stage),
-                cell!(format!("{:.3}", elapsed).green()),
+                cell!(format!("{:.3}", elapsed).blue()),
                 cell!(format!("{:.3}", elapsed * 1000.0).cyan()),
                 cell!(format_number!(result.speed).yellow()),
             ];
@@ -307,7 +307,7 @@ impl Benchmark {
         format!(
             "{}\nElapsed:\n {} secs ({} msecs)\n {} iters/s",
             result_separator!(),
-            format!("{:.3}", elapsed).green(),
+            format!("{:.3}", elapsed).blue(),
             format!("{:.3}", elapsed * 1000.0).cyan(),
             format_number!(result.speed).yellow()
         )
