@@ -25,12 +25,14 @@ impl Benchmark {
             iterations: 0,
         }
     }
+
     pub fn new(iterations: u32) -> Self {
         Self {
             started: Instant::now(),
             iterations,
         }
     }
+
     pub fn print(&self) {
         self.print_for(self.iterations);
     }
