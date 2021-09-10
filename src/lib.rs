@@ -21,7 +21,7 @@
 //! 
 //! use std::sync::Mutex;
 //! 
-//! let n = 10_000_000;
+//! let n = 100_000_000;
 //! let mutex = Mutex::new(0);
 //! benchmark_start!();
 //! for _ in 0..n {
