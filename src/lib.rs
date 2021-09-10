@@ -25,7 +25,7 @@
 //! let mutex = Mutex::new(0);
 //! benchmark_start!();
 //! for _ in 0..n {
-//! 	let _a = mutex.lock().unwrap();
+//!     let _a = mutex.lock().unwrap();
 //! }
 //! benchmark_print!(n);
 //! ```
@@ -34,8 +34,8 @@
 //! 
 //! Pretty cool, isn't it? Let us create a more complex staged benchmark and
 //! compare e.g. Mutex vs RwLock. Staged benchmarks display a comparison table, if
-//! the etalon stage is specified, the table also contains speed difference for all
-//! others.
+//! the reference stage is specified, the table also contains speed difference for
+//! all others.
 //! 
 //! ```rust
 //! #[macro_use]
@@ -48,12 +48,12 @@
 //! let rwlock = RwLock::new(0);
 //! staged_benchmark_start!("mutex");
 //! for _ in 0..n {
-//! 	let _a = mutex.lock().unwrap();
+//!     let _a = mutex.lock().unwrap();
 //! }
 //! staged_benchmark_finish_current!(n);
 //! staged_benchmark_start!("rwlock-read");
 //! for _ in 0..n {
-//! 	let _a = rwlock.read().unwrap();
+//!     let _a = rwlock.read().unwrap();
 //! }
 //! staged_benchmark_finish_current!(n);
 //! staged_benchmark_print_for!("rwlock-read");
@@ -152,14 +152,14 @@ macro_rules! staged_benchmark_print {
     };
 }
 
-/// Print staged benchmark result, specifying the etalonic stage
+/// Print staged benchmark result, specifying the reference stage
 #[macro_export]
 macro_rules! staged_benchmark_print_for {
-    ($etalon: expr) => {
+    ($eta: expr) => {
         bma_benchmark::DEFAULT_STAGE_BENCHMARK
             .lock()
             .unwrap()
-            .print_for($etalon);
+            .print_for($eta);
     };
 }
 
@@ -210,16 +210,24 @@ impl StageBenchmark {
     }
 
     /// Start benchmark stage
+    ///
+    /// # Panics
+    ///
+    /// Will panic if a stage with the same name already exists
     pub fn start(&mut self, name: &str) {
         let benchmark = Benchmark::new0();
         if self.benchmarks.insert(name.to_owned(), benchmark).is_some() {
-            panic!("Benchmark stage {} is already started", name);
+            panic!("Benchmark stage {} already exists", name);
         }
         self.current_stage = Some(name.to_owned());
         println!("{}", format!("!!! stage started: {} ", name).black());
     }
 
     /// Finish benchmark stage
+    ///
+    /// # Panics
+    ///
+    /// Will panic if a specified stage was not started
     pub fn finish(&mut self, name: &str, iterations: u32) {
         let benchmark = self
             .benchmarks
@@ -289,7 +297,7 @@ impl StageBenchmark {
         self._result_table_for(None)
     }
 
-    /// Get the result table for staged benchmark, specifying the etalon stage
+    /// Get the result table for staged benchmark, specifying the reference stage
     pub fn result_table_for(&self, eta: &str) -> Table {
         self._result_table_for(Some(eta))
     }
@@ -300,7 +308,7 @@ impl StageBenchmark {
         self.result_table().printstd();
     }
 
-    /// Print the result table, specifying the etalon stage
+    /// Print the result table, specifying the reference stage
     pub fn print_for(&self, eta: &str) {
         println!("{}", result_separator!());
         self.result_table_for(eta).printstd();

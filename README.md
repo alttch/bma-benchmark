@@ -25,7 +25,7 @@ let n = 100_000_000;
 let mutex = Mutex::new(0);
 benchmark_start!();
 for _ in 0..n {
-	let _a = mutex.lock().unwrap();
+    let _a = mutex.lock().unwrap();
 }
 benchmark_print!(n);
 ```
@@ -34,8 +34,8 @@ benchmark_print!(n);
 
 Pretty cool, isn't it? Let us create a more complex staged benchmark and
 compare e.g. Mutex vs RwLock. Staged benchmarks display a comparison table, if
-the etalon stage is specified, the table also contains speed difference for all
-others.
+the reference stage is specified, the table also contains speed difference for
+all others.
 
 ```rust
 #[macro_use]
@@ -48,12 +48,12 @@ let mutex = Mutex::new(0);
 let rwlock = RwLock::new(0);
 staged_benchmark_start!("mutex");
 for _ in 0..n {
-	let _a = mutex.lock().unwrap();
+    let _a = mutex.lock().unwrap();
 }
 staged_benchmark_finish_current!(n);
 staged_benchmark_start!("rwlock-read");
 for _ in 0..n {
-	let _a = rwlock.read().unwrap();
+    let _a = rwlock.read().unwrap();
 }
 staged_benchmark_finish_current!(n);
 staged_benchmark_print_for!("rwlock-read");
