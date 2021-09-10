@@ -19,6 +19,18 @@ lazy_static! {
         Mutex::new(StageBenchmark::new());
 }
 
+macro_rules! result_separator {
+    () => {
+        separator("--- Benchmark results ")
+    };
+}
+
+macro_rules! format_number {
+    ($n: expr) => {
+        $n.to_formatted_string(&Locale::fr)
+    };
+}
+
 #[macro_export]
 macro_rules! staged_benchmark_start {
     ($name: expr) => {
@@ -31,11 +43,11 @@ macro_rules! staged_benchmark_start {
 
 #[macro_export]
 macro_rules! staged_benchmark_finish {
-    ($name: expr) => {
+    ($name: expr, $iterations: expr) => {
         bma_benchmark::DEFAULT_STAGE_BENCHMARK
             .lock()
             .unwrap()
-            .finish($name);
+            .finish($name, $iterations);
     };
 }
 
@@ -127,6 +139,7 @@ impl StageBenchmark {
             panic!("Benchmark stage {} is already started", name);
         }
         self.current_stage = Some(name.to_owned());
+        println!("{}", format!("!!! stage started: {} ", name).black());
     }
 
     pub fn finish(&mut self, name: &str, iterations: u32) {
@@ -135,18 +148,23 @@ impl StageBenchmark {
             .get_mut(name)
             .expect(&format!("Benchmark stage {} not found", name));
         benchmark.finish_for(iterations);
+        println!(
+            "{}",
+            format!(
+                "*** stage completed: {} ({} iters)",
+                name,
+                format_number!(iterations)
+            )
+            .black()
+        );
     }
 
     pub fn finish_current(&mut self, iterations: u32) {
-        let benchmark = self
-            .benchmarks
-            .get_mut(
-                self.current_stage
-                    .as_ref()
-                    .expect("No active benchmark stage"),
-            )
-            .unwrap();
-        benchmark.finish_for(iterations);
+        let current_stage = self
+            .current_stage
+            .take()
+            .expect("No active benchmark stage");
+        self.finish(&current_stage, iterations);
     }
 
     pub fn reset(&mut self) {
@@ -167,15 +185,17 @@ impl StageBenchmark {
                 cell!(stage),
                 cell!(format!("{:.3}", elapsed).green()),
                 cell!(format!("{:.3}", elapsed * 1000.0).cyan()),
-                cell!(result.speed.to_formatted_string(&Locale::fr).yellow()),
+                cell!(format_number!(result.speed).yellow()),
             ];
             eta_speed.map(|r| {
                 if result.speed != r {
                     let diff = result.speed as f64 / r as f64;
-                    if diff > 1.0 {
-                        cells.push(cell!(format!("+{:.2} %", ((diff - 1.0) * 100.0)).green()));
-                    } else {
-                        cells.push(cell!(format!("-{:.2} %", ((1.0 - diff) * 100.0)).red()));
+                    if diff > 1.0001 || diff < 0.9999 {
+                        if diff > 1.0 {
+                            cells.push(cell!(format!("+{:.2} %", ((diff - 1.0) * 100.0)).green()));
+                        } else {
+                            cells.push(cell!(format!("-{:.2} %", ((1.0 - diff) * 100.0)).red()));
+                        }
                     }
                 }
             });
@@ -193,12 +213,12 @@ impl StageBenchmark {
     }
 
     pub fn print(&self) {
-        println!("{}", separator());
+        println!("{}", result_separator!());
         self.result_table().printstd();
     }
 
     pub fn print_for(&self, eta: &str) {
-        println!("{}", separator());
+        println!("{}", result_separator!());
         self.result_table_for(eta).printstd();
     }
 }
@@ -286,10 +306,10 @@ impl Benchmark {
         let elapsed = result.elapsed.as_secs_f64();
         format!(
             "{}\nElapsed:\n {} secs ({} msecs)\n {} iters/s",
-            separator(),
+            result_separator!(),
             format!("{:.3}", elapsed).green(),
             format!("{:.3}", elapsed * 1000.0).cyan(),
-            result.speed.to_formatted_string(&Locale::fr).yellow()
+            format_number!(result.speed).yellow()
         )
     }
 
@@ -324,14 +344,16 @@ fn ctable(titles: Option<Vec<&str>>, raw: bool) -> prettytable::Table {
     table
 }
 
-fn separator() -> colored::ColoredString {
+fn separator(title: &str) -> colored::ColoredString {
     let size = terminal_size();
     let width = if let Some((Width(w), Height(_))) = size {
         w
     } else {
         40
     };
-    let title = "--- Benchmark results ".to_owned();
-    let title_len = title.len() as u16;
-    (title + &(0..width - title_len).map(|_| "-").collect::<String>()).black()
+    (title.to_owned()
+        + &(0..width - title.len() as u16)
+            .map(|_| "-")
+            .collect::<String>())
+        .black()
 }
