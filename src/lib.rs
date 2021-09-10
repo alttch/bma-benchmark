@@ -1,3 +1,4 @@
+use colored::Colorize;
 use std::fmt;
 use std::time::Instant;
 
@@ -44,9 +45,12 @@ impl Benchmark {
     pub fn to_string_for(&self, iterations: u32) -> String {
         let elapsed = self.started.elapsed().as_secs_f64();
         format!(
-            "Elapsed: {:.3} secs ({:.0} iters/s)",
-            elapsed,
-            f64::from(iterations) / elapsed
+            "{}\n{}:\n {} secs ({} msecs)\n {} iters/s",
+            (0..30).map(|_| "-").collect::<String>().black(),
+            "Elapsed".black(),
+            format!("{:.3}", elapsed).green(),
+            format!("{:.3}", elapsed * 1000.0).cyan(),
+            format!("{:.0}", f64::from(iterations) / elapsed).yellow()
         )
     }
 
