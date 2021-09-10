@@ -32,9 +32,9 @@
 //! 
 //! ![Simple benchmark result](https://raw.githubusercontent.com/alttch/bma-benchmark/main/simple.png)
 //! 
-//! Pretty cool, isn't it? Let us create more complex staged benchmark and compare
-//! e.g. Mutex vs RwLock. Staged benchmarks display a comparison table, if the
-//! etalon stage is specified, the table also contains speed difference for all
+//! Pretty cool, isn't it? Let us create a more complex staged benchmark and
+//! compare e.g. Mutex vs RwLock. Staged benchmarks display a comparison table, if
+//! the etalon stage is specified, the table also contains speed difference for all
 //! others.
 //! 
 //! ```rust
