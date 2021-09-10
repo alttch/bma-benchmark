@@ -215,12 +215,12 @@ impl StageBenchmark {
     ///
     /// Will panic if a stage with the same name already exists
     pub fn start(&mut self, name: &str) {
+        self.current_stage = Some(name.to_owned());
+        println!("{}", format!("!!! stage started: {} ", name).black());
         let benchmark = Benchmark::new0();
         if self.benchmarks.insert(name.to_owned(), benchmark).is_some() {
             panic!("Benchmark stage {} already exists", name);
         }
-        self.current_stage = Some(name.to_owned());
-        println!("{}", format!("!!! stage started: {} ", name).black());
     }
 
     /// Finish benchmark stage
