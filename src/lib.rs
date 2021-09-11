@@ -237,9 +237,10 @@ impl StageBenchmark {
         println!(
             "{}",
             format!(
-                "*** stage completed: {} ({} iters)",
+                "*** stage completed: {} ({} iters, {:.3} secs)",
                 name,
-                format_number!(iterations)
+                format_number!(iterations),
+                benchmark.elapsed.unwrap().as_secs_f64()
             )
             .black()
         );
