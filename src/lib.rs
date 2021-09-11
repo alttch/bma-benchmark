@@ -153,7 +153,7 @@ macro_rules! result_separator {
 
 macro_rules! format_number {
     ($n: expr) => {
-        $n.to_formatted_string(&Locale::fr)
+        $n.to_formatted_string(&Locale::en).replace(',', "_")
     };
 }
 
