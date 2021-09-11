@@ -30,6 +30,20 @@
 //! benchmark_print!(n);
 //! ```
 //! 
+//! The same can be done with a single "benchmark" macro:
+//! 
+//! ```rust
+//! #[macro_use]
+//! extern crate bma_benchmark;
+//! 
+//! use std::sync::Mutex;
+//! 
+//! let mutex = Mutex::new(0);
+//! benchmark!(100_000_000, {
+//!     let _a = mutex.lock().unwrap();
+//!     });
+//! ```
+//! 
 //! ![Simple benchmark result](https://raw.githubusercontent.com/alttch/bma-benchmark/main/simple.png)
 //! 
 //! Pretty cool, isn't it? Let us create a more complex staged benchmark and
@@ -56,6 +70,26 @@
 //!     let _a = rwlock.read().unwrap();
 //! }
 //! staged_benchmark_finish_current!(n);
+//! staged_benchmark_print_for!("rwlock-read");
+//! ```
+//! 
+//! The same can be done with a couple of "staged\_benchmark" macros:
+//! 
+//! ```rust
+//! #[macro_use]
+//! extern crate bma_benchmark;
+//! 
+//! use std::sync::{Mutex, RwLock};
+//! 
+//! let n = 10_000_000;
+//! let mutex = Mutex::new(0);
+//! let rwlock = RwLock::new(0);
+//! staged_benchmark!("mutex", n, {
+//!     let _a = mutex.lock().unwrap();
+//! });
+//! staged_benchmark!("rwlock-read", n, {
+//!     let _a = rwlock.read().unwrap();
+//! });
 //! staged_benchmark_print_for!("rwlock-read");
 //! ```
 //! 
@@ -94,6 +128,34 @@ macro_rules! result_separator {
 macro_rules! format_number {
     ($n: expr) => {
         $n.to_formatted_string(&Locale::fr)
+    };
+}
+
+#[macro_export]
+/// run a stage of staged bechmark
+///
+/// The variable _iteration can be used inside the benchmark code
+macro_rules! staged_benchmark {
+    ($name: expr, $iterations: expr, $code: block) => {
+        bma_benchmark::staged_benchmark_start!($name);
+        for _iteration in 0..$iterations {
+            $code
+        }
+        bma_benchmark::staged_benchmark_finish!($name, $iterations);
+    };
+}
+
+#[macro_export]
+/// run a benchmark
+///
+/// The variable _iteration can be used inside the benchmark code
+macro_rules! benchmark {
+    ($iterations: expr, $code: block) => {
+        bma_benchmark::benchmark_start!();
+        for _iteration in 0..$iterations {
+            $code
+        }
+        bma_benchmark::benchmark_print!($iterations);
     };
 }
 

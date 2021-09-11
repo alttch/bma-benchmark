@@ -30,6 +30,20 @@ for _ in 0..n {
 benchmark_print!(n);
 ```
 
+The same can be done with a single "benchmark" macro:
+
+```rust
+#[macro_use]
+extern crate bma_benchmark;
+
+use std::sync::Mutex;
+
+let mutex = Mutex::new(0);
+benchmark!(100_000_000, {
+    let _a = mutex.lock().unwrap();
+    });
+```
+
 ![Simple benchmark result](https://raw.githubusercontent.com/alttch/bma-benchmark/main/simple.png)
 
 Pretty cool, isn't it? Let us create a more complex staged benchmark and
@@ -56,6 +70,26 @@ for _ in 0..n {
     let _a = rwlock.read().unwrap();
 }
 staged_benchmark_finish_current!(n);
+staged_benchmark_print_for!("rwlock-read");
+```
+
+The same can be done with a couple of "staged\_benchmark" macros:
+
+```rust
+#[macro_use]
+extern crate bma_benchmark;
+
+use std::sync::{Mutex, RwLock};
+
+let n = 10_000_000;
+let mutex = Mutex::new(0);
+let rwlock = RwLock::new(0);
+staged_benchmark!("mutex", n, {
+    let _a = mutex.lock().unwrap();
+});
+staged_benchmark!("rwlock-read", n, {
+    let _a = rwlock.read().unwrap();
+});
 staged_benchmark_print_for!("rwlock-read");
 ```
 
