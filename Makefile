@@ -1,4 +1,4 @@
-VERSION=0.0.10
+VERSION=0.0.11
 
 all:
 	@echo "Select target"
@@ -10,7 +10,7 @@ tag:
 ver:
 	sed -i 's/^version = ".*/version = "${VERSION}"/g' Cargo.toml
 	sed -i 's/^version = ".*/version = "${VERSION}"/g' ./bma-benchmark-proc/Cargo.toml
-	sed -i 's/^bma-benchmark-proc =.*/bma-benchmark-proc = { path = ".\/bma-benchmark-proc", version = "${VERSION}" }/g' Cargo.toml
+	sed -i 's/^bma-benchmark-proc =.*/bma-benchmark-proc = { path = ".\/bma-benchmark-proc", version = "=${VERSION}" }/g' Cargo.toml
 
 doc:
 	grep -v "^//!" src/lib.rs > src/lib.rs.tmp
@@ -24,4 +24,5 @@ release: pub tag
 pub: doc publish-cargo-crate
 
 publish-cargo-crate:
+	cd bma-benchmark-proc && cargo publish
 	cargo publish
