@@ -189,7 +189,7 @@ pub struct BenchmarkResult {
     pub speed: u32,
 }
 
-/// Stage benchmark
+/// Staged benchmark
 pub struct StagedBenchmark {
     benchmarks: BTreeMap<String, Benchmark>,
     current_stage: Option<String>,
