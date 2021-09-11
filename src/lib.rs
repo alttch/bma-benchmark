@@ -81,8 +81,8 @@ use terminal_size::{terminal_size, Height, Width};
 
 lazy_static! {
     pub static ref DEFAULT_BENCHMARK: Mutex<Benchmark> = Mutex::new(Benchmark::new0());
-    pub static ref DEFAULT_STAGE_BENCHMARK: Mutex<StageBenchmark> =
-        Mutex::new(StageBenchmark::new());
+    pub static ref DEFAULT_STAGED_BENCHMARK: Mutex<StagedBenchmark> =
+        Mutex::new(StagedBenchmark::new());
 }
 
 macro_rules! result_separator {
@@ -101,7 +101,7 @@ macro_rules! format_number {
 #[macro_export]
 macro_rules! staged_benchmark_start {
     ($name: expr) => {
-        bma_benchmark::DEFAULT_STAGE_BENCHMARK
+        bma_benchmark::DEFAULT_STAGED_BENCHMARK
             .lock()
             .unwrap()
             .start($name);
@@ -112,7 +112,7 @@ macro_rules! staged_benchmark_start {
 #[macro_export]
 macro_rules! staged_benchmark_finish {
     ($name: expr, $iterations: expr) => {
-        bma_benchmark::DEFAULT_STAGE_BENCHMARK
+        bma_benchmark::DEFAULT_STAGED_BENCHMARK
             .lock()
             .unwrap()
             .finish($name, $iterations);
@@ -123,7 +123,7 @@ macro_rules! staged_benchmark_finish {
 #[macro_export]
 macro_rules! staged_benchmark_finish_current {
     ($iterations: expr) => {
-        bma_benchmark::DEFAULT_STAGE_BENCHMARK
+        bma_benchmark::DEFAULT_STAGED_BENCHMARK
             .lock()
             .unwrap()
             .finish_current($iterations);
@@ -134,7 +134,7 @@ macro_rules! staged_benchmark_finish_current {
 #[macro_export]
 macro_rules! staged_benchmark_reset {
     () => {
-        bma_benchmark::DEFAULT_STAGE_BENCHMARK
+        bma_benchmark::DEFAULT_STAGED_BENCHMARK
             .lock()
             .unwrap()
             .reset();
@@ -145,7 +145,7 @@ macro_rules! staged_benchmark_reset {
 #[macro_export]
 macro_rules! staged_benchmark_print {
     () => {
-        bma_benchmark::DEFAULT_STAGE_BENCHMARK
+        bma_benchmark::DEFAULT_STAGED_BENCHMARK
             .lock()
             .unwrap()
             .print();
@@ -156,7 +156,7 @@ macro_rules! staged_benchmark_print {
 #[macro_export]
 macro_rules! staged_benchmark_print_for {
     ($eta: expr) => {
-        bma_benchmark::DEFAULT_STAGE_BENCHMARK
+        bma_benchmark::DEFAULT_STAGED_BENCHMARK
             .lock()
             .unwrap()
             .print_for($eta);
@@ -190,18 +190,18 @@ pub struct BenchmarkResult {
 }
 
 /// Stage benchmark
-pub struct StageBenchmark {
+pub struct StagedBenchmark {
     benchmarks: BTreeMap<String, Benchmark>,
     current_stage: Option<String>,
 }
 
-impl Default for StageBenchmark {
+impl Default for StagedBenchmark {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl StageBenchmark {
+impl StagedBenchmark {
     pub fn new() -> Self {
         Self {
             benchmarks: BTreeMap::new(),
