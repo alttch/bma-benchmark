@@ -101,12 +101,12 @@
 //! #[macro_use]
 //! extern crate bma_benchmark;
 //! 
-//! #[benchmark_stage(i=1_000_000)]
+//! #[benchmark_stage(i=10_000_000)]
 //! fn benchmark_mutex(mutex: Mutex<u64>) {
 //!     let _a = mutex.lock().unwrap();
 //! }
 //! 
-//! #[benchmark_stage(i=1_000_000,name="rwlock-read")]
+//! #[benchmark_stage(i=10_000_000,name="rwlock-read")]
 //! fn benchmark_rwlock(rwlock: RwLock<u64>) {
 //!     let _a = rwlock.read().unwrap();
 //! }
