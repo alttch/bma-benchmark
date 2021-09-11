@@ -30,7 +30,7 @@
 //! benchmark_print!(n);
 //! ```
 //! 
-//! The same can be done with a single "benchmark" macro:
+//! The same can also be done with a single "benchmark" macro:
 //! 
 //! ```rust
 //! #[macro_use]
@@ -47,7 +47,7 @@
 //! ![Simple benchmark result](https://raw.githubusercontent.com/alttch/bma-benchmark/main/simple.png)
 //! 
 //! Pretty cool, isn't it? Let us create a more complex staged benchmark and
-//! compare e.g. Mutex vs RwLock. Staged benchmarks display a comparison table, if
+//! compare e.g. Mutex vs RwLock. Staged benchmarks display a comparison table. If
 //! the reference stage is specified, the table also contains speed difference for
 //! all others.
 //! 
@@ -73,7 +73,7 @@
 //! staged_benchmark_print_for!("rwlock-read");
 //! ```
 //! 
-//! The same can be done with a couple of "staged\_benchmark" macros:
+//! The same can also be done with a couple of *staged_benchmark* macros:
 //! 
 //! ```rust
 //! #[macro_use]
@@ -93,6 +93,31 @@
 //! staged_benchmark_print_for!("rwlock-read");
 //! ```
 //! 
+//! Or split into functions with *benchmark_stage* attributes:
+//! 
+//! ```rust
+//! use std::sync::{Mutex, RwLock};
+//! 
+//! #[macro_use]
+//! extern crate bma_benchmark;
+//! 
+//! #[benchmark_stage(i=1_000_000)]
+//! fn benchmark_mutex(mutex: Mutex<u64>) {
+//!     let _a = mutex.lock().unwrap();
+//! }
+//! 
+//! #[benchmark_stage(i=1_000_000,name="rwlock-read")]
+//! fn benchmark_rwlock(rwlock: RwLock<u64>) {
+//!     let _a = rwlock.read().unwrap();
+//! }
+//! 
+//! let mutex = Mutex::new(0);
+//! let rwlock = RwLock::new(0);
+//! benchmark_mutex(mutex);
+//! benchmark_rwlock(rwlock);
+//! staged_benchmark_print_for!("rwlock-read");
+//! ```
+//! 
 //! ![Simple benchmark result](https://raw.githubusercontent.com/alttch/bma-benchmark/main/staged.png)
 //! 
 //! Need anything more complex? Check the crate docs and use structures manually.
@@ -103,6 +128,7 @@ extern crate lazy_static;
 #[macro_use]
 extern crate prettytable;
 
+pub use bma_benchmark_proc::benchmark_stage;
 use colored::Colorize;
 use num_format::{Locale, ToFormattedString};
 use prettytable::Table;
