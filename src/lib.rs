@@ -164,9 +164,8 @@ macro_rules! format_number {
 macro_rules! staged_benchmark {
     ($name: expr, $iterations: expr, $code: block) => {
         bma_benchmark::staged_benchmark_start!($name);
-        for _iteration in 0..$iterations {
+        for _iteration in 0..$iterations
             $code
-        }
         bma_benchmark::staged_benchmark_finish!($name, $iterations);
     };
 }
@@ -178,9 +177,8 @@ macro_rules! staged_benchmark {
 macro_rules! benchmark {
     ($iterations: expr, $code: block) => {
         bma_benchmark::benchmark_start!();
-        for _iteration in 0..$iterations {
+        for _iteration in 0..$iterations
             $code
-        }
         bma_benchmark::benchmark_print!($iterations);
     };
 }

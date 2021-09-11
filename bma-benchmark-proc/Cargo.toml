@@ -1,0 +1,15 @@
+[package]
+name = "bma-benchmark-proc"
+version = "0.0.10"
+edition = "2018"
+license = "MIT"
+authors = ["Sergei S. <div@altertech.com>"]
+repository = "https://github.com/alttch/bma-benchmark"
+description = "Procedure macros for bma-benchmark"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "1.0.9"
+syn = { version = "1.0.76", features = ["full"] }

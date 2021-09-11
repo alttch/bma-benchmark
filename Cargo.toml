@@ -13,4 +13,4 @@ lazy_static = "1.4.0"
 terminal_size = "0.1.17"
 num-format = "0.4.0"
 prettytable-rs = "0.8.0"
-bma-benchmark-proc = "0.0.1"
+bma-benchmark-proc = { path = "./bma-benchmark-proc", version = "0.0.10" }
