@@ -13,7 +13,7 @@ const ERR_INVALID_OPTIONS: &str = "Invalid options";
 /// * **i** number of iterations, required
 /// * **name** custom stage name (the default is function name)
 ///
-/// If a function starts with *test_* or *benchmark_*, the prefix is automatically stripped.
+/// If a function name starts with *test_* or *benchmark_*, the prefix is automatically stripped.
 ///
 /// Example:
 ///
