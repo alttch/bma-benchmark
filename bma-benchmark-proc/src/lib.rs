@@ -101,10 +101,9 @@ pub fn benchmark_stage(args: TokenStream, input: TokenStream) -> TokenStream {
         name = name[1..name.len() - 1].to_owned();
     }
     let fn_block = &fn_item.block;
-    let stmt: syn::Stmt =
-        syn::parse(quote!(bma_benchmark::staged_benchmark!(#name, #iterations, #fn_block);).into())
-            .unwrap();
-    fn_item.block.stmts.clear();
-    fn_item.block.stmts.push(stmt);
+    fn_item.block.stmts = vec![syn::parse(
+        quote!(bma_benchmark::staged_benchmark!(#name, #iterations, #fn_block);).into(),
+    )
+    .unwrap()];
     item.into_token_stream().into()
 }
