@@ -1,6 +1,6 @@
 [package]
 name = "bma-benchmark-proc"
-version = "0.0.13"
+version = "0.0.14"
 edition = "2018"
 license = "MIT"
 authors = ["Sergei S. <div@altertech.com>"]
