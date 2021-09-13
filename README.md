@@ -145,8 +145,8 @@ benchmark_check!(10_000_000, {
 The *benchmark_stage* attribute has **check** option, which behaves similarly.
 If used, the function body MUST (not return but) END with a bool as well.
 
-If any errors are reported, additional three columns appear, success count,
-error count and error rate:
+If any errors are reported, additional columns appear, success count, error
+count and error rate:
 
 ![Simple benchmark result](https://raw.githubusercontent.com/alttch/bma-benchmark/main/errors.png)
 
