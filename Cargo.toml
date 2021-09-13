@@ -1,6 +1,6 @@
 [package]
 name = "bma-benchmark"
-version = "0.0.11"
+version = "0.0.12"
 edition = "2018"
 license = "MIT"
 authors = ["Sergei S. <div@altertech.com>"]
@@ -13,4 +13,4 @@ lazy_static = "1.4.0"
 terminal_size = "0.1.17"
 num-format = "0.4.0"
 prettytable-rs = "0.8.0"
-bma-benchmark-proc = { path = "./bma-benchmark-proc", version = "=0.0.11" }
+bma-benchmark-proc = { path = "./bma-benchmark-proc", version = "=0.0.12" }
