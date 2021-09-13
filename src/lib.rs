@@ -145,8 +145,8 @@
 //! The *benchmark_stage* attribute has **check** option, which behaves similarly.
 //! If used, the function body MUST (not return but) END with a bool as well.
 //! 
-//! If any errors are reported, additional two columns appear, error count and
-//! error rate:
+//! If any errors are reported, additional three columns appear, success count,
+//! error count and error rate:
 //! 
 //! ![Simple benchmark result](https://raw.githubusercontent.com/alttch/bma-benchmark/main/errors.png)
 //! 
@@ -445,7 +445,7 @@ impl StagedBenchmark {
         }
         let mut header = vec!["stage", "iters"];
         if have_errs {
-            header.extend(["errs", "err.rate"]);
+            header.extend(["succs", "errs", "err.rate"]);
         }
         header.extend(["secs", "msecs", "iters/s"]);
         let eta_speed = eta.map(|v| {
@@ -458,10 +458,16 @@ impl StagedBenchmark {
             let elapsed = result.elapsed.as_secs_f64();
             let mut cells = vec![
                 cell!(stage),
-                cell!(format_number!(result.iterations).green()),
+                cell!(format_number!(result.iterations).magenta()),
             ];
             if have_errs {
+                let success = result.iterations - result.errors;
                 cells.extend([
+                    cell!(if success > 0 {
+                        format_number!(success).green()
+                    } else {
+                        <_>::default()
+                    }),
                     cell!(if result.errors > 0 {
                         format_number!(result.errors).red()
                     } else {
@@ -469,7 +475,7 @@ impl StagedBenchmark {
                     }),
                     cell!(if result.errors > 0 {
                         format!(
-                            "{:.2}%",
+                            "{:.2} %",
                             (f64::from(result.errors) / f64::from(result.iterations) * 100.0)
                         )
                         .red()
@@ -630,9 +636,11 @@ impl Benchmark {
         let result = self.result(iterations, errors);
         let elapsed = result.elapsed.as_secs_f64();
         format!(
-            "{}\nIterations: {}, Errors: {}{}\nElapsed:\n {} secs ({} msecs)\n {} iters/s",
+            "{}\nIterations: {}, success: {}, errors: {}{}\n\
+            Elapsed:\n {} secs ({} msecs)\n {} iters/s",
             result_separator!(),
-            format_number!(result.iterations).green(),
+            format_number!(result.iterations).magenta(),
+            format_number!(result.iterations - result.errors).green(),
             if result.errors > 0 {
                 format_number!(result.errors).red()
             } else {
@@ -642,7 +650,7 @@ impl Benchmark {
                 format!(
                     ", error rate: {}",
                     format!(
-                        "{:.2}%",
+                        "{:.2} %",
                         (f64::from(result.errors) / f64::from(result.iterations) * 100.0)
                     )
                     .red()
