@@ -120,6 +120,36 @@
 //! 
 //! ![Simple benchmark result](https://raw.githubusercontent.com/alttch/bma-benchmark/main/staged.png)
 //! 
+//! ## Errors
+//! 
+//! The macros *benchmark_print*, *staged_benchmark_finish* and
+//! *staged_benchmark_finish_current* accept error count as an additional
+//! parameter.
+//! 
+//! For code blocks, macros *benchmark_check* and *staged_benchmark_check* can be
+//! used. In this case, a statement MUST return true for the normal execution and
+//! false for errors:
+//! 
+//! ```rust
+//! #[macro_use]
+//! extern crate bma_benchmark;
+//! 
+//! use std::sync::Mutex;
+//! 
+//! let mutex = Mutex::new(0);
+//! benchmark!(100_000_000, {
+//!     mutex.lock().is_ok()
+//!     });
+//! ```
+//! 
+//! The *benchmark_stage* attribute has **check** option, which behaves similarly.
+//! If used, the function body MUST (not return but) END with a bool as well.
+//! 
+//! If any errors are reported, additional two columns appear, error count and
+//! error rate:
+//! 
+//! ![Simple benchmark result](https://raw.githubusercontent.com/alttch/bma-benchmark/main/errors.png)
+//! 
 //! Need anything more complex? Check the crate docs and use structures manually.
 //! 
 //! Enjoy!
