@@ -171,6 +171,25 @@ macro_rules! staged_benchmark {
 }
 
 #[macro_export]
+/// run a stage of staged bechmark and check the result for each iteration
+///
+/// The statement MUST return true for ok and false for errors
+///
+/// The variable _iteration can be used inside the benchmark code
+macro_rules! staged_benchmark_check {
+    ($name: expr, $iterations: expr, $code: block) => {
+        let mut bma_benchmark_errors = 0;
+        bma_benchmark::staged_benchmark_start!($name);
+        for _iteration in 0..$iterations {
+            if !$code {
+                bma_benchmark_errors += 1;
+            }
+        }
+        bma_benchmark::staged_benchmark_finish!($name, $iterations, bma_benchmark_errors);
+    };
+}
+
+#[macro_export]
 /// run a benchmark
 ///
 /// The variable _iteration can be used inside the benchmark code
@@ -180,6 +199,25 @@ macro_rules! benchmark {
         for _iteration in 0..$iterations
             $code
         bma_benchmark::benchmark_print!($iterations);
+    };
+}
+
+#[macro_export]
+/// run a benchmark and check the result for each iteration
+///
+/// The statement MUST return true for ok and false for errors
+///
+/// The variable _iteration can be used inside the benchmark code
+macro_rules! benchmark_check {
+    ($iterations: expr, $code: block) => {
+        let mut bma_benchmark_errors = 0;
+        bma_benchmark::benchmark_start!();
+        for _iteration in 0..$iterations {
+            if !$code {
+                bma_benchmark_errors += 1;
+            }
+        }
+        bma_benchmark::benchmark_print!($iterations, bma_benchmark_errors);
     };
 }
 
@@ -201,7 +239,13 @@ macro_rules! staged_benchmark_finish {
         bma_benchmark::DEFAULT_STAGED_BENCHMARK
             .lock()
             .unwrap()
-            .finish($name, $iterations);
+            .finish($name, $iterations, 0);
+    };
+    ($name: expr, $iterations: expr, $errors: expr) => {
+        bma_benchmark::DEFAULT_STAGED_BENCHMARK
+            .lock()
+            .unwrap()
+            .finish($name, $iterations, $errors);
     };
 }
 
@@ -212,7 +256,13 @@ macro_rules! staged_benchmark_finish_current {
         bma_benchmark::DEFAULT_STAGED_BENCHMARK
             .lock()
             .unwrap()
-            .finish_current($iterations);
+            .finish_current($iterations, 0);
+    };
+    ($iterations: expr, $errors: expr) => {
+        bma_benchmark::DEFAULT_STAGED_BENCHMARK
+            .lock()
+            .unwrap()
+            .finish_current($iterations, $errors);
     };
 }
 
@@ -264,7 +314,13 @@ macro_rules! benchmark_print {
         bma_benchmark::DEFAULT_BENCHMARK
             .lock()
             .unwrap()
-            .print_for($iterations);
+            .print(Some($iterations), None);
+    };
+    ($iterations: expr, $errors: expr) => {
+        bma_benchmark::DEFAULT_BENCHMARK
+            .lock()
+            .unwrap()
+            .print(Some($iterations), Some($errors));
     };
 }
 
@@ -272,6 +328,7 @@ macro_rules! benchmark_print {
 pub struct BenchmarkResult {
     pub elapsed: Duration,
     pub iterations: u32,
+    pub errors: u32,
     pub speed: u32,
 }
 
@@ -314,12 +371,12 @@ impl StagedBenchmark {
     /// # Panics
     ///
     /// Will panic if a specified stage was not started
-    pub fn finish(&mut self, name: &str, iterations: u32) {
+    pub fn finish(&mut self, name: &str, iterations: u32, errors: u32) {
         let benchmark = self
             .benchmarks
             .get_mut(name)
             .unwrap_or_else(|| panic!("Benchmark stage {} not found", name));
-        benchmark.finish_for(iterations);
+        benchmark.finish(Some(iterations), Some(errors));
         println!(
             "{}",
             format!(
@@ -333,12 +390,12 @@ impl StagedBenchmark {
     }
 
     /// Finish current (last started) benchmark stage
-    pub fn finish_current(&mut self, iterations: u32) {
+    pub fn finish_current(&mut self, iterations: u32, errors: u32) {
         let current_stage = self
             .current_stage
             .take()
             .expect("No active benchmark stage");
-        self.finish(&current_stage, iterations);
+        self.finish(&current_stage, iterations, errors);
     }
 
     /// Reset staged benchmark
@@ -347,30 +404,64 @@ impl StagedBenchmark {
     }
 
     fn _result_table_for(&self, eta: Option<&str>) -> Table {
-        let mut header = vec!["stage", "sec", "msec", "iters/s"];
+        let mut have_errs = false;
+        let mut results: Vec<(String, BenchmarkResult)> = Vec::new();
+        for (stage, benchmark) in &self.benchmarks {
+            let result = benchmark.result0();
+            if result.errors > 0 {
+                have_errs = true;
+            }
+            results.push((stage.clone(), result));
+        }
+        let mut header = vec!["stage", "iters"];
+        if have_errs {
+            header.extend(["errs", "err.rate"]);
+        }
+        header.extend(["secs", "msecs", "iters/s"]);
         let eta_speed = eta.map(|v| {
-            header.push("diff");
-            self.benchmarks.get(v).unwrap().result().speed
+            header.push("diff.s");
+            self.benchmarks.get(v).unwrap().result0().speed
         });
         let mut table = ctable(Some(header), false);
         for (stage, benchmark) in &self.benchmarks {
-            let result = benchmark.result();
+            let result = benchmark.result0();
             let elapsed = result.elapsed.as_secs_f64();
             let mut cells = vec![
                 cell!(stage),
+                cell!(format_number!(result.iterations).green()),
+            ];
+            if have_errs {
+                cells.extend([
+                    cell!(if result.errors > 0 {
+                        format_number!(result.errors).red()
+                    } else {
+                        <_>::default()
+                    }),
+                    cell!(if result.errors > 0 {
+                        format!(
+                            "{:.2}%",
+                            (f64::from(result.errors) / f64::from(result.iterations) * 100.0)
+                        )
+                        .red()
+                    } else {
+                        "".normal()
+                    }),
+                ]);
+            }
+            cells.extend([
                 cell!(format!("{:.3}", elapsed).blue()),
                 cell!(format!("{:.3}", elapsed * 1000.0).cyan()),
                 cell!(format_number!(result.speed).yellow()),
-            ];
+            ]);
             if let Some(r) = eta_speed {
                 if result.speed != r {
                     let diff = f64::from(result.speed) / f64::from(r);
                     if !(0.9999..=1.0001).contains(&diff) {
-                        if diff > 1.0 {
-                            cells.push(cell!(format!("+{:.2} %", ((diff - 1.0) * 100.0)).green()));
+                        cells.push(cell!(if diff > 1.0 {
+                            format!("+{:.2} %", ((diff - 1.0) * 100.0)).green()
                         } else {
-                            cells.push(cell!(format!("-{:.2} %", ((1.0 - diff) * 100.0)).red()));
-                        }
+                            format!("-{:.2} %", ((1.0 - diff) * 100.0)).red()
+                        }));
                     }
                 }
             };
@@ -406,6 +497,7 @@ impl StagedBenchmark {
 pub struct Benchmark {
     started: Instant,
     iterations: u32,
+    errors: u32,
     elapsed: Option<Duration>,
 }
 
@@ -417,7 +509,11 @@ impl Default for Benchmark {
 
 impl fmt::Display for Benchmark {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_string_for(self.iterations))
+        write!(
+            f,
+            "{}",
+            self.to_string_for(Some(self.iterations), Some(self.errors))
+        )
     }
 }
 
@@ -427,6 +523,7 @@ impl Benchmark {
         Self {
             started: Instant::now(),
             iterations: 0,
+            errors: 0,
             elapsed: None,
         }
     }
@@ -436,6 +533,7 @@ impl Benchmark {
         Self {
             started: Instant::now(),
             iterations,
+            errors: 0,
             elapsed: None,
         }
     }
@@ -443,59 +541,81 @@ impl Benchmark {
     /// Reset the benchmark timer
     pub fn reset(&mut self) {
         self.started = Instant::now();
+        self.iterations = 0;
+        self.errors = 0;
     }
 
     /// Finish a simple benchmark
-    pub fn finish(&mut self) {
+    pub fn finish0(&mut self) {
         self.elapsed = Some(self.started.elapsed());
     }
 
     /// Finish a simple benchmark, specifying number of iterations made
-    pub fn finish_for(&mut self, iterations: u32) {
+    pub fn finish(&mut self, iterations: Option<u32>, errors: Option<u32>) {
         self.elapsed = Some(self.started.elapsed());
-        self.iterations = iterations;
+        if let Some(i) = iterations {
+            self.iterations = i;
+        }
+        if let Some(e) = errors {
+            self.errors = e;
+        }
     }
 
     /// Print a simple benchmark result
-    pub fn print(&self) {
-        self.print_for(self.iterations);
+    pub fn print0(&self) {
+        self.print(Some(self.iterations), Some(self.errors));
     }
 
     /// Print a simple benchmark result, specifying number of iterations made
-    pub fn print_for(&self, iterations: u32) {
-        println!("{}", self.to_string_for(iterations));
+    pub fn print(&self, iterations: Option<u32>, errors: Option<u32>) {
+        println!("{}", self.to_string_for(iterations, errors));
     }
 
     #[allow(clippy::cast_sign_loss)]
     #[allow(clippy::cast_possible_truncation)]
     /// Get a benchmark result
-    pub fn result(&self) -> BenchmarkResult {
-        let elapsed = self.elapsed.unwrap_or_else(|| self.started.elapsed());
-        BenchmarkResult {
-            elapsed,
-            iterations: self.iterations,
-            speed: (f64::from(self.iterations) / elapsed.as_secs_f64()) as u32,
-        }
+    pub fn result0(&self) -> BenchmarkResult {
+        self.result(Some(self.iterations), Some(self.errors))
     }
 
     #[allow(clippy::cast_sign_loss)]
     #[allow(clippy::cast_possible_truncation)]
     /// Get a benchmark result, specifying number of iterations made
-    pub fn result_for(&self, iterations: u32) -> BenchmarkResult {
+    pub fn result(&self, iterations: Option<u32>, errors: Option<u32>) -> BenchmarkResult {
         let elapsed = self.elapsed.unwrap_or_else(|| self.started.elapsed());
+        let it = iterations.unwrap_or(self.iterations);
         BenchmarkResult {
             elapsed,
-            iterations,
-            speed: (f64::from(iterations) / elapsed.as_secs_f64()) as u32,
+            iterations: it,
+            errors: errors.unwrap_or(self.errors),
+            speed: (f64::from(it) / elapsed.as_secs_f64()) as u32,
         }
     }
 
-    fn to_string_for(&self, iterations: u32) -> String {
-        let result = self.result_for(iterations);
+    fn to_string_for(&self, iterations: Option<u32>, errors: Option<u32>) -> String {
+        let result = self.result(iterations, errors);
         let elapsed = result.elapsed.as_secs_f64();
         format!(
-            "{}\nElapsed:\n {} secs ({} msecs)\n {} iters/s",
+            "{}\nIterations: {}, Errors: {}{}\nElapsed:\n {} secs ({} msecs)\n {} iters/s",
             result_separator!(),
+            format_number!(result.iterations).green(),
+            if result.errors > 0 {
+                format_number!(result.errors).red()
+            } else {
+                "None".normal()
+            },
+            if result.errors > 0 {
+                format!(
+                    ", error rate: {}",
+                    format!(
+                        "{:.2}%",
+                        (f64::from(result.errors) / f64::from(result.iterations) * 100.0)
+                    )
+                    .red()
+                )
+            } else {
+                "".to_owned()
+            },
             format!("{:.3}", elapsed).blue(),
             format!("{:.3}", elapsed * 1000.0).cyan(),
             format_number!(result.speed).yellow()

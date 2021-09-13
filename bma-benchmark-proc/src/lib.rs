@@ -12,6 +12,7 @@ const ERR_INVALID_OPTIONS: &str = "Invalid options";
 ///
 /// * **i** number of iterations, required
 /// * **name** custom stage name (the default is function name)
+/// * **check** check for the result, the function body MUST (not return but) END with a bool
 ///
 /// If a function name starts with *test_* or *benchmark_*, the prefix is automatically stripped.
 ///
@@ -31,6 +32,13 @@ const ERR_INVALID_OPTIONS: &str = "Invalid options";
 /// }
 /// ```
 ///
+/// ```rust
+/// #[benchmark_stage(i=1_000,name=stage1,check)]
+/// fn test1() {
+///     File::create("/tmp/test123").is_ok()
+/// }
+/// ```
+///
 /// # Panics
 ///
 /// Will panic on invalid options
@@ -39,6 +47,7 @@ pub fn benchmark_stage(args: TokenStream, input: TokenStream) -> TokenStream {
     let mut args_iter = args.into_iter();
     let mut opt_i: Option<u32> = None;
     let mut opt_name: Option<String> = None;
+    let mut checked = false;
     macro_rules! parse_opt {
         ($c: block) => {{
             let v = args_iter.next().expect(ERR_INVALID_OPTIONS);
@@ -78,6 +87,7 @@ pub fn benchmark_stage(args: TokenStream, input: TokenStream) -> TokenStream {
                         _ => panic!("Invalid value for \"name\""),
                     }
                 }),
+                "check" => checked = true,
                 _ => panic!("Invalid parameter: {}", s),
             }
         }
@@ -101,9 +111,16 @@ pub fn benchmark_stage(args: TokenStream, input: TokenStream) -> TokenStream {
         name = name[1..name.len() - 1].to_owned();
     }
     let fn_block = &fn_item.block;
-    fn_item.block.stmts = vec![syn::parse(
-        quote!(bma_benchmark::staged_benchmark!(#name, #iterations, #fn_block);).into(),
-    )
-    .unwrap()];
+    if checked {
+        fn_item.block.stmts = vec![syn::parse(
+            quote!(bma_benchmark::staged_benchmark_check!(#name, #iterations, #fn_block);).into(),
+        )
+        .unwrap()];
+    } else {
+        fn_item.block.stmts = vec![syn::parse(
+            quote!(bma_benchmark::staged_benchmark!(#name, #iterations, #fn_block);).into(),
+        )
+        .unwrap()];
+    }
     item.into_token_stream().into()
 }
