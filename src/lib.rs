@@ -617,11 +617,12 @@ impl Benchmark {
     pub fn result(&self, iterations: Option<u32>, errors: Option<u32>) -> BenchmarkResult {
         let elapsed = self.elapsed.unwrap_or_else(|| self.started.elapsed());
         let it = iterations.unwrap_or(self.iterations);
+        let errs = errors.unwrap_or(self.errors);
         BenchmarkResult {
             elapsed,
             iterations: it,
-            errors: errors.unwrap_or(self.errors),
-            speed: (f64::from(it) / elapsed.as_secs_f64()) as u32,
+            errors: errs,
+            speed: (f64::from(it - errs) / elapsed.as_secs_f64()) as u32,
         }
     }
 
