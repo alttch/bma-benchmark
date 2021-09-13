@@ -137,7 +137,7 @@ extern crate bma_benchmark;
 use std::sync::Mutex;
 
 let mutex = Mutex::new(0);
-benchmark!(100_000_000, {
+benchmark_check!(10_000_000, {
     mutex.lock().is_ok()
     });
 ```
