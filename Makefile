@@ -25,5 +25,5 @@ pub: doc publish-cargo-crate
 
 publish-cargo-crate:
 	cd bma-benchmark-proc && cargo publish
-	sleep 15
+	sleep 20
 	cargo publish
