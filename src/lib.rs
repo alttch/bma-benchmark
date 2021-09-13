@@ -527,6 +527,7 @@ impl StagedBenchmark {
 pub struct Benchmark {
     started: Instant,
     iterations: u32,
+    set_iterations: u32,
     errors: u32,
     elapsed: Option<Duration>,
 }
@@ -553,6 +554,7 @@ impl Benchmark {
         Self {
             started: Instant::now(),
             iterations: 0,
+            set_iterations: 0,
             errors: 0,
             elapsed: None,
         }
@@ -563,6 +565,7 @@ impl Benchmark {
         Self {
             started: Instant::now(),
             iterations,
+            set_iterations: iterations,
             errors: 0,
             elapsed: None,
         }
@@ -571,7 +574,7 @@ impl Benchmark {
     /// Reset the benchmark timer
     pub fn reset(&mut self) {
         self.started = Instant::now();
-        self.iterations = 0;
+        self.iterations = self.set_iterations;
         self.errors = 0;
     }
 
@@ -658,6 +661,13 @@ impl Benchmark {
     /// finish / print
     pub fn increment(&mut self) {
         self.iterations += 1;
+    }
+
+    /// Increment errors inside benchmark
+    ///
+    /// Not required to use if the number of errors is specified at benchmark finish / print
+    pub fn increment_errors(&mut self) {
+        self.errors += 1;
     }
 }
 
