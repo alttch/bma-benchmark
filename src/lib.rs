@@ -189,8 +189,6 @@ macro_rules! format_number {
 
 #[macro_export]
 /// run a stage of staged bechmark
-///
-/// The variable _iteration can be used inside the benchmark code
 macro_rules! staged_benchmark {
     ($name: expr, $iterations: expr, $code: block) => {
         bma_benchmark::staged_benchmark_start!($name);
@@ -204,8 +202,6 @@ macro_rules! staged_benchmark {
 /// run a stage of staged bechmark and check the result for each iteration
 ///
 /// The statement MUST return true for ok and false for errors
-///
-/// The variable _iteration can be used inside the benchmark code
 macro_rules! staged_benchmark_check {
     ($name: expr, $iterations: expr, $code: block) => {
         let mut bma_benchmark_errors = 0;
@@ -221,8 +217,6 @@ macro_rules! staged_benchmark_check {
 
 #[macro_export]
 /// run a benchmark
-///
-/// The variable _iteration can be used inside the benchmark code
 macro_rules! benchmark {
     ($iterations: expr, $code: block) => {
         bma_benchmark::benchmark_start!();
@@ -236,8 +230,6 @@ macro_rules! benchmark {
 /// run a benchmark and check the result for each iteration
 ///
 /// The statement MUST return true for ok and false for errors
-///
-/// The variable _iteration can be used inside the benchmark code
 macro_rules! benchmark_check {
     ($iterations: expr, $code: block) => {
         let mut bma_benchmark_errors = 0;
