@@ -629,7 +629,7 @@ impl Benchmark {
         let elapsed = result.elapsed.as_secs_f64();
         format!(
             "{}\nIterations: {}, success: {}, errors: {}{}\n\
-            Elapsed:\n {} secs ({} msecs)\n {} iters/s\n{} ns per iter",
+            Elapsed:\n {} secs ({} msecs)\n {} iters/s\n {} ns per iter",
             result_separator!(),
             format_number!(result.iterations).magenta(),
             format_number!(result.iterations - result.errors).green(),
