@@ -629,7 +629,7 @@ impl Benchmark {
         let elapsed = result.elapsed.as_secs_f64();
         format!(
             "{}\nIterations: {}, success: {}, errors: {}{}\n\
-            Elapsed:\n {} secs ({} msecs)\n {} iters/s",
+            Elapsed:\n {} secs ({} msecs)\n {} iters/s\n{} ns per iter",
             result_separator!(),
             format_number!(result.iterations).magenta(),
             format_number!(result.iterations - result.errors).green(),
@@ -652,7 +652,8 @@ impl Benchmark {
             },
             format!("{:.3}", elapsed).blue(),
             format!("{:.3}", elapsed * 1000.0).cyan(),
-            format_number!(result.speed).yellow()
+            format_number!(result.speed).yellow(),
+            format_number!(1_000_000_000 / result.speed).magenta()
         )
     }
 
