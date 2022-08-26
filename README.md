@@ -158,6 +158,7 @@ use bma_benchmark::LatencyBenchmark;
 let mut lb = LatencyBenchmark::new();
 for _ in 0..1000 {
     lb.op_start();
+    // do something
     lb.op_finish();
 }
 lb.print();
