@@ -15,7 +15,7 @@ a pretty colored readable format.
 
 Let us create a simple benchmark, using crate macros only:
 
-```rust
+```rust.ignore
 #[macro_use]
 extern crate bma_benchmark;
 
@@ -32,7 +32,7 @@ benchmark_print!(n);
 
 The same can also be done with a single "benchmark" macro:
 
-```rust
+```rust,ignore
 #[macro_use]
 extern crate bma_benchmark;
 
@@ -51,7 +51,7 @@ compare e.g. Mutex vs RwLock. Staged benchmarks display a comparison table. If
 the reference stage is specified, the table also contains speed difference for
 all others.
 
-```rust
+```rust,ignore
 #[macro_use]
 extern crate bma_benchmark;
 
@@ -75,7 +75,7 @@ staged_benchmark_print_for!("rwlock-read");
 
 The same can also be done with a couple of *staged_benchmark* macros:
 
-```rust
+```rust,ignore
 #[macro_use]
 extern crate bma_benchmark;
 
@@ -95,7 +95,7 @@ staged_benchmark_print_for!("rwlock-read");
 
 Or split into functions with *benchmark_stage* attributes:
 
-```rust
+```rust,ignore
 use std::sync::{Mutex, RwLock};
 
 #[macro_use]
@@ -130,7 +130,7 @@ For code blocks, macros *benchmark_check* and *staged_benchmark_check* can be
 used. In this case, a statement MUST return true for the normal execution and
 false for errors:
 
-```rust
+```rust.ignore
 #[macro_use]
 extern crate bma_benchmark;
 
@@ -149,6 +149,23 @@ If any errors are reported, additional columns appear, success count, error
 count and error rate:
 
 ![Simple benchmark result](https://raw.githubusercontent.com/alttch/bma-benchmark/main/errors.png)
+
+## Latency benchmarks
+
+```rust,ignore
+use bma_benchmark::LatencyBenchmark;
+
+let mut lb = LatencyBenchmark::new();
+for _ in 0..1000 {
+    lb.op_start();
+    lb.op_finish();
+}
+lb.print();
+```
+
+```ignore
+latency (μs) avg: 883, min: 701, max: 1_165
+```
 
 Need anything more complex? Check the crate docs and use structures manually.
 

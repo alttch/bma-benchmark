@@ -1,7 +1,7 @@
 [package]
 name = "bma-benchmark"
-version = "0.0.18"
-edition = "2018"
+version = "0.0.19"
+edition = "2021"
 license = "MIT"
 authors = ["Sergei S. <div@altertech.com>"]
 repository = "https://github.com/alttch/bma-benchmark"
