@@ -37,10 +37,12 @@ macro_rules! format_number {
 /// run a stage of staged bechmark
 macro_rules! staged_benchmark {
     ($name: expr, $iterations: expr, $code: block) => {
-        bma_benchmark::staged_benchmark_start!($name);
+        $crate::staged_benchmark_start!($name);
+        black_box(move || {
         for _iteration in 0..$iterations
             $code
-        bma_benchmark::staged_benchmark_finish!($name, $iterations);
+        })();
+        $crate::staged_benchmark_finish!($name, $iterations);
     };
 }
 
@@ -51,13 +53,15 @@ macro_rules! staged_benchmark {
 macro_rules! staged_benchmark_check {
     ($name: expr, $iterations: expr, $code: block) => {
         let mut bma_benchmark_errors = 0;
-        bma_benchmark::staged_benchmark_start!($name);
-        for _iteration in 0..$iterations {
-            if !$code {
-                bma_benchmark_errors += 1;
+        $crate::staged_benchmark_start!($name);
+        black_box(move || {
+            for _iteration in 0..$iterations {
+                if !$code {
+                    bma_benchmark_errors += 1;
+                }
             }
-        }
-        bma_benchmark::staged_benchmark_finish!($name, $iterations, bma_benchmark_errors);
+        })();
+        $crate::staged_benchmark_finish!($name, $iterations, bma_benchmark_errors);
     };
 }
 
@@ -65,10 +69,12 @@ macro_rules! staged_benchmark_check {
 /// run a benchmark
 macro_rules! benchmark {
     ($iterations: expr, $code: block) => {
-        bma_benchmark::benchmark_start!();
+        $crate::benchmark_start!();
+        black_box(move || {
         for _iteration in 0..$iterations
             $code
-        bma_benchmark::benchmark_print!($iterations);
+        })();
+        $crate::benchmark_print!($iterations);
     };
 }
 
@@ -79,13 +85,15 @@ macro_rules! benchmark {
 macro_rules! benchmark_check {
     ($iterations: expr, $code: block) => {
         let mut bma_benchmark_errors = 0;
-        bma_benchmark::benchmark_start!();
-        for _iteration in 0..$iterations {
-            if !$code {
-                bma_benchmark_errors += 1;
+        $crate::benchmark_start!();
+        black_box(move || {
+            for _iteration in 0..$iterations {
+                if !$code {
+                    bma_benchmark_errors += 1;
+                }
             }
-        }
-        bma_benchmark::benchmark_print!($iterations, bma_benchmark_errors);
+        })();
+        $crate::benchmark_print!($iterations, bma_benchmark_errors);
     };
 }
 
@@ -93,7 +101,7 @@ macro_rules! benchmark_check {
 #[macro_export]
 macro_rules! staged_benchmark_start {
     ($name: expr) => {
-        bma_benchmark::DEFAULT_STAGED_BENCHMARK
+        $crate::DEFAULT_STAGED_BENCHMARK
             .lock()
             .unwrap()
             .start($name);
@@ -104,13 +112,13 @@ macro_rules! staged_benchmark_start {
 #[macro_export]
 macro_rules! staged_benchmark_finish {
     ($name: expr, $iterations: expr) => {
-        bma_benchmark::DEFAULT_STAGED_BENCHMARK
+        $crate::DEFAULT_STAGED_BENCHMARK
             .lock()
             .unwrap()
             .finish($name, $iterations, 0);
     };
     ($name: expr, $iterations: expr, $errors: expr) => {
-        bma_benchmark::DEFAULT_STAGED_BENCHMARK
+        $crate::DEFAULT_STAGED_BENCHMARK
             .lock()
             .unwrap()
             .finish($name, $iterations, $errors);
@@ -121,13 +129,13 @@ macro_rules! staged_benchmark_finish {
 #[macro_export]
 macro_rules! staged_benchmark_finish_current {
     ($iterations: expr) => {
-        bma_benchmark::DEFAULT_STAGED_BENCHMARK
+        $crate::DEFAULT_STAGED_BENCHMARK
             .lock()
             .unwrap()
             .finish_current($iterations, 0);
     };
     ($iterations: expr, $errors: expr) => {
-        bma_benchmark::DEFAULT_STAGED_BENCHMARK
+        $crate::DEFAULT_STAGED_BENCHMARK
             .lock()
             .unwrap()
             .finish_current($iterations, $errors);
@@ -138,10 +146,7 @@ macro_rules! staged_benchmark_finish_current {
 #[macro_export]
 macro_rules! staged_benchmark_reset {
     () => {
-        bma_benchmark::DEFAULT_STAGED_BENCHMARK
-            .lock()
-            .unwrap()
-            .reset();
+        $crate::DEFAULT_STAGED_BENCHMARK.lock().unwrap().reset();
     };
 }
 
@@ -149,10 +154,7 @@ macro_rules! staged_benchmark_reset {
 #[macro_export]
 macro_rules! staged_benchmark_print {
     () => {
-        bma_benchmark::DEFAULT_STAGED_BENCHMARK
-            .lock()
-            .unwrap()
-            .print();
+        $crate::DEFAULT_STAGED_BENCHMARK.lock().unwrap().print();
     };
 }
 
@@ -160,7 +162,7 @@ macro_rules! staged_benchmark_print {
 #[macro_export]
 macro_rules! staged_benchmark_print_for {
     ($eta: expr) => {
-        bma_benchmark::DEFAULT_STAGED_BENCHMARK
+        $crate::DEFAULT_STAGED_BENCHMARK
             .lock()
             .unwrap()
             .print_for($eta);
@@ -171,7 +173,7 @@ macro_rules! staged_benchmark_print_for {
 #[macro_export]
 macro_rules! benchmark_start {
     () => {
-        bma_benchmark::DEFAULT_BENCHMARK.lock().unwrap().reset();
+        $crate::DEFAULT_BENCHMARK.lock().unwrap().reset();
     };
 }
 
@@ -179,13 +181,13 @@ macro_rules! benchmark_start {
 #[macro_export]
 macro_rules! benchmark_print {
     ($iterations: expr) => {
-        bma_benchmark::DEFAULT_BENCHMARK
+        $crate::DEFAULT_BENCHMARK
             .lock()
             .unwrap()
             .print(Some($iterations), None);
     };
     ($iterations: expr, $errors: expr) => {
-        bma_benchmark::DEFAULT_BENCHMARK
+        $crate::DEFAULT_BENCHMARK
             .lock()
             .unwrap()
             .print(Some($iterations), Some($errors));
@@ -308,6 +310,9 @@ impl StagedBenchmark {
     }
 
     /// Finish current (last started) benchmark stage
+    /// # Panics
+    ///
+    /// Will panic if no active benchmark stage
     pub fn finish_current(&mut self, iterations: u32, errors: u32) {
         let current_stage = self
             .current_stage
@@ -544,7 +549,7 @@ impl Benchmark {
                     .red()
                 )
             } else {
-                "".to_owned()
+                String::new()
             },
             format!("{:.3}", elapsed).blue(),
             format!("{:.3}", elapsed * 1000.0).cyan(),
@@ -651,6 +656,9 @@ impl Perf {
             .push(self.start.elapsed());
         self.start = Instant::now();
     }
+    /// # Panics
+    ///
+    /// Will panic if the number of iterations is less than 1 or greater than u32::MAX
     pub fn print(&self) {
         println!("Iterations: {}", self.iterations.to_string().green().bold());
         println!();
@@ -660,7 +668,9 @@ impl Perf {
             let durations = self.measurements.get(name).unwrap();
             let min = durations.iter().min().unwrap().as_micros();
             let max = durations.iter().max().unwrap().as_micros();
-            let avg = (durations.iter().sum::<Duration>() / durations.len() as u32).as_micros();
+            let avg = (durations.iter().sum::<Duration>()
+                / u32::try_from(durations.len()).unwrap())
+            .as_micros();
             table.add_row(prettytable::Row::new(vec![
                 cell!(name),
                 cell!(format_number!(min).blue().bold()),
@@ -678,7 +688,8 @@ impl Perf {
         }
         let min = totals.iter().min().unwrap().as_micros();
         let max = totals.iter().max().unwrap().as_micros();
-        let avg = (totals.iter().sum::<Duration>() / totals.len() as u32).as_micros();
+        let avg =
+            (totals.iter().sum::<Duration>() / u32::try_from(totals.len()).unwrap()).as_micros();
         table.add_row(row!["-----".black()]);
         table.add_row(prettytable::Row::new(vec![
             cell!("TOTAL".yellow().bold()),
@@ -694,6 +705,7 @@ impl Perf {
 
 const WARMUP_DURATION: Duration = Duration::from_secs(5);
 
+/// recommended to call this function before running speed race benchmarks
 pub fn warmup() {
     println!("{}", "warming up".black());
     std::hint::black_box(move || {
@@ -703,4 +715,12 @@ pub fn warmup() {
         }
     })();
     println!("{}", "CPU has been warmed up".black());
+}
+
+/// a shortcut to bma_benchmark::warmup() in case all the macros are imported
+#[macro_export]
+macro_rules! warmup {
+    () => {
+        $crate::warmup();
+    };
 }

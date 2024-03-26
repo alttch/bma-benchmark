@@ -15,7 +15,7 @@ a pretty colored readable format.
 
 Let us create a simple benchmark, using crate macros only:
 
-```rust.ignore
+```rust,ignore
 #[macro_use]
 extern crate bma_benchmark;
 
@@ -23,10 +23,13 @@ use std::sync::Mutex;
 
 let n = 100_000_000;
 let mutex = Mutex::new(0);
+warmup!();
 benchmark_start!();
-for _ in 0..n {
-    let _a = mutex.lock().unwrap();
-}
+std::hint::black_box(move || {
+    for _ in 0..n {
+        let _a = mutex.lock().unwrap();
+    }
+  })();
 benchmark_print!(n);
 ```
 
@@ -60,20 +63,26 @@ use std::sync::{Mutex, RwLock};
 let n = 10_000_000;
 let mutex = Mutex::new(0);
 let rwlock = RwLock::new(0);
+warmup!();
 staged_benchmark_start!("mutex");
-for _ in 0..n {
-    let _a = mutex.lock().unwrap();
-}
+std::hint::black_box(move || {
+    for _ in 0..n {
+        let _a = mutex.lock().unwrap();
+    }
+  })();
 staged_benchmark_finish_current!(n);
 staged_benchmark_start!("rwlock-read");
-for _ in 0..n {
-    let _a = rwlock.read().unwrap();
-}
+std::hint::black_box(move || {
+    for _ in 0..n {
+        let _a = rwlock.read().unwrap();
+    }
+  })();
 staged_benchmark_finish_current!(n);
 staged_benchmark_print_for!("rwlock-read");
 ```
 
-The same can also be done with a couple of *staged_benchmark* macros:
+The same can also be done with a couple of *staged_benchmark* macros (black box
+is applied automatically):
 
 ```rust,ignore
 #[macro_use]
@@ -84,6 +93,7 @@ use std::sync::{Mutex, RwLock};
 let n = 10_000_000;
 let mutex = Mutex::new(0);
 let rwlock = RwLock::new(0);
+warmup!();
 staged_benchmark!("mutex", n, {
     let _a = mutex.lock().unwrap();
 });
@@ -152,6 +162,8 @@ count and error rate:
 
 ## Latency benchmarks
 
+(warming up and applying a black box is not recommended for latency benchmarks)
+
 ```rust,ignore
 use bma_benchmark::LatencyBenchmark;
 
@@ -169,6 +181,8 @@ latency (μs) avg: 883, min: 701, max: 1_165
 ```
 
 ## Performance measurements
+
+(warming up and applying a black box is not recommended for latency benchmarks)
 
 ```rust,ignore
 use bma_benchmark::Perf;

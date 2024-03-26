@@ -1,6 +1,6 @@
 [package]
 name = "bma-benchmark"
-version = "0.0.23"
+version = "0.0.24"
 edition = "2021"
 license = "MIT"
 authors = ["Sergei S. <div@altertech.com>"]
