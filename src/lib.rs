@@ -612,7 +612,7 @@ fn separator(title: &str) -> colored::ColoredString {
 
 pub struct Perf {
     start: Instant,
-    iterations: u64,
+    iterations: usize,
     checkpoints: Vec<&'static str>,
     measurements: BTreeMap<&'static str, Vec<Duration>>,
 }
@@ -668,14 +668,27 @@ impl Perf {
                 cell!(format_number!(avg).green().bold()),
             ]));
         }
+        let mut totals: Vec<Duration> = Vec::with_capacity(self.iterations);
+        for i in 0..self.iterations {
+            let mut t = Duration::default();
+            for name in &self.checkpoints {
+                t += self.measurements.get(name).unwrap()[i];
+            }
+            totals.push(t);
+        }
+        let min = totals.iter().min().unwrap().as_micros();
+        let max = totals.iter().max().unwrap().as_micros();
+        let avg = (totals.iter().sum::<Duration>() / totals.len() as u32).as_micros();
+        table.add_row(row!["-----".black()]);
+        table.add_row(prettytable::Row::new(vec![
+            cell!("TOTAL".yellow().bold()),
+            cell!(format_number!(min).blue().bold()),
+            cell!(format_number!(max).yellow()),
+            cell!(format_number!(avg).green().bold()),
+        ]));
         table.printstd();
         println!();
-        println!(
-            "{}",
-            "(the durations are provided in microseconds)"
-                .black()
-                .bold()
-        );
+        println!("{}", "(the durations are provided in microseconds)".black());
     }
 }
 
