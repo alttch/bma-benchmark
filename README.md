@@ -168,6 +168,27 @@ lb.print();
 latency (μs) avg: 883, min: 701, max: 1_165
 ```
 
+## Performance measurements
+
+```rust,ignore
+let file_path = "largefile";
+let mut perf = Perf::new();
+for _ in 0..10 {
+    perf.start();
+    let mut file = File::open(file_path).unwrap();
+    perf.checkpoint("open");
+    let mut hasher = Sha256::new();
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer).unwrap();
+    perf.checkpoint("read");
+    hasher.update(&buffer);
+    perf.checkpoint("hash");
+}
+perf.print();
+```
+
+![Perf](https://raw.githubusercontent.com/alttch/bma-benchmark/main/perf.png)
+
 Need anything more complex? Check the crate docs and use structures manually.
 
 Enjoy!

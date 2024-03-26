@@ -609,3 +609,67 @@ fn separator(title: &str) -> colored::ColoredString {
             .collect::<String>())
         .black()
 }
+
+pub struct Perf {
+    start: Instant,
+    iterations: u64,
+    checkpoints: Vec<&'static str>,
+    measurements: BTreeMap<&'static str, Vec<Duration>>,
+}
+
+impl Default for Perf {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Perf {
+    pub fn new() -> Self {
+        Self {
+            start: Instant::now(),
+            iterations: 0,
+            checkpoints: Vec::new(),
+            measurements: BTreeMap::new(),
+        }
+    }
+    pub fn start(&mut self) {
+        self.iterations += 1;
+        self.start = Instant::now();
+    }
+    pub fn checkpoint(&mut self, name: &'static str) {
+        if self.iterations == 1 {
+            self.checkpoints.push(name);
+        }
+        self.measurements
+            .entry(name)
+            .or_default()
+            .push(self.start.elapsed());
+        self.start = Instant::now();
+    }
+    pub fn print(&self) {
+        println!("Iterations: {}", self.iterations.to_string().green().bold());
+        println!();
+        let header = vec!["checkpoint", "min", "max", "avg"];
+        let mut table = ctable(Some(header), false);
+        for name in &self.checkpoints {
+            let durations = self.measurements.get(name).unwrap();
+            let min = durations.iter().min().unwrap().as_micros();
+            let max = durations.iter().max().unwrap().as_micros();
+            let avg = (durations.iter().sum::<Duration>() / durations.len() as u32).as_micros();
+            table.add_row(prettytable::Row::new(vec![
+                cell!(name),
+                cell!(format_number!(min).blue().bold()),
+                cell!(format_number!(max).yellow()),
+                cell!(format_number!(avg).green().bold()),
+            ]));
+        }
+        table.printstd();
+        println!();
+        println!(
+            "{}",
+            "(the durations are provided in microseconds)"
+                .black()
+                .bold()
+        );
+    }
+}
