@@ -4,16 +4,11 @@ Benchmark for Rust and humans
 
 ## What is this for
 
-I like testing different libraries, crates and algorithms. I do benchmarks on
-prototypes almost every day and decided to make a simple dedicated crate for
-that. Here we go: <https://crates.io/crates/bma-benchmark>
-
-The benchmark engine is very simple to launch and outputs all required data in
-a pretty colored readable format.
+A lightweight and simple benchmarking library for Rust.
 
 ## How to use
 
-Let us create a simple benchmark, using crate macros only:
+Let us create a simple benchmark, using the crate macros only:
 
 ```rust,ignore
 #[macro_use]
@@ -49,10 +44,9 @@ benchmark!(100_000_000, {
 
 ![Simple benchmark result](https://raw.githubusercontent.com/alttch/bma-benchmark/main/simple.png)
 
-Pretty cool, isn't it? Let us create a more complex staged benchmark and
-compare e.g. Mutex vs RwLock. Staged benchmarks display a comparison table. If
-the reference stage is specified, the table also contains speed difference for
-all others.
+Let us create a more complicated staged benchmark and compare e.g. Mutex vs
+RwLock. Staged benchmarks display a comparison table. If the reference stage is
+specified, the table also contains speed difference for all others.
 
 ```rust,ignore
 #[macro_use]
@@ -152,8 +146,9 @@ benchmark_check!(10_000_000, {
     });
 ```
 
-The *benchmark_stage* attribute has **check** option, which behaves similarly.
-If used, the function body MUST (not return but) END with a bool as well.
+The *benchmark_stage* attribute has got **check** option, which behaves
+similarly. If used, the function body MUST (not return but) END with a bool as
+well.
 
 If any errors are reported, additional columns appear, success count, error
 count and error rate:
@@ -205,6 +200,7 @@ perf.print();
 
 ![Perf](https://raw.githubusercontent.com/alttch/bma-benchmark/main/perf1.png)
 
-Need anything more complex? Check the crate docs and use structures manually.
+Need anything more sophisticated? Check the crate docs and use its structures
+directly.
 
 Enjoy!
