@@ -113,12 +113,12 @@ pub fn benchmark_stage(args: TokenStream, input: TokenStream) -> TokenStream {
     let fn_block = &fn_item.block;
     if checked {
         fn_item.block.stmts = vec![syn::parse(
-            quote!(bma_benchmark::staged_benchmark_check!(#name, #iterations, #fn_block);).into(),
+            quote!(::bma_benchmark::staged_benchmark_check!(#name, #iterations, #fn_block);).into(),
         )
         .unwrap()];
     } else {
         fn_item.block.stmts = vec![syn::parse(
-            quote!(bma_benchmark::staged_benchmark!(#name, #iterations, #fn_block);).into(),
+            quote!(::bma_benchmark::staged_benchmark!(#name, #iterations, #fn_block);).into(),
         )
         .unwrap()];
     }
