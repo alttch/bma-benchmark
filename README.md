@@ -28,7 +28,8 @@ std::hint::black_box(move || {
 benchmark_print!(n);
 ```
 
-The same can also be done with a single "benchmark" macro:
+The same can also be done with a single "benchmark" macro (black box is applied
+automatically):
 
 ```rust,ignore
 #[macro_use]
