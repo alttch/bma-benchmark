@@ -660,7 +660,7 @@ impl Perf {
     ///
     /// Will panic if the number of iterations is less than 1 or greater than u32::MAX
     pub fn print(&self) {
-        println!("Iterations: {}", self.iterations.to_string().green().bold());
+        println!("Iterations: {}", self.iterations.to_string().magenta());
         println!();
         let header = vec!["checkpoint", "min", "max", "avg"];
         let mut table = ctable(Some(header), false);
