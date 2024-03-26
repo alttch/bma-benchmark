@@ -632,6 +632,11 @@ impl Perf {
             measurements: BTreeMap::new(),
         }
     }
+    pub fn reset(&mut self) {
+        self.iterations = 0;
+        self.checkpoints.clear();
+        self.measurements.clear();
+    }
     pub fn start(&mut self) {
         self.iterations += 1;
         self.start = Instant::now();
@@ -672,4 +677,17 @@ impl Perf {
                 .bold()
         );
     }
+}
+
+const WARMUP_DURATION: Duration = Duration::from_secs(5);
+
+pub fn warmup() {
+    println!("{}", "warming up".black());
+    std::hint::black_box(move || {
+        let start = Instant::now();
+        while start.elapsed() < WARMUP_DURATION {
+            std::thread::yield_now();
+        }
+    })();
+    println!("{}", "CPU has been warmed up".black());
 }
