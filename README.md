@@ -171,6 +171,8 @@ latency (μs) avg: 883, min: 701, max: 1_165
 ## Performance measurements
 
 ```rust,ignore
+use bma_benchmark::Perf;
+
 let file_path = "largefile";
 let mut perf = Perf::new();
 for _ in 0..10 {
