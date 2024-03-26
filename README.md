@@ -187,7 +187,7 @@ for _ in 0..10 {
 perf.print();
 ```
 
-![Perf](https://raw.githubusercontent.com/alttch/bma-benchmark/main/perf.png)
+![Perf](https://raw.githubusercontent.com/alttch/bma-benchmark/main/perf1.png)
 
 Need anything more complex? Check the crate docs and use structures manually.
 
