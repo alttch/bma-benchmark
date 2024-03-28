@@ -178,7 +178,8 @@ latency (μs) avg: 883, min: 701, max: 1_165
 
 ## Performance measurements
 
-(warming up and applying a black box is not recommended for latency benchmarks)
+(warming up and applying a black box is not recommended for performance
+measurements)
 
 ```rust,ignore
 use bma_benchmark::Perf;
